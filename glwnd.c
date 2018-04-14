@@ -32,6 +32,7 @@ static GLint gl_attrs[] = {
 	None
 };
 
+
 /*!
  * \brief DrawAQuad
  * \param x
@@ -81,7 +82,7 @@ void DrawAQuad(int x, int y) {
 	glEnd();
 
 	xx = xx + 0.1;
-	if (xx > 5.0) {
+	if (xx > 12.0) {
 		xx = 0.0;
 	}
 
@@ -104,8 +105,7 @@ void DrawAQuad(int x, int y) {
  * \param wparam
  * \return
  */
-int start_glwnd(wndparam * wparam)
-{
+int start_glwnd(wndparam * wparam) {
 	if (wparam == NULL) {
 		return -1;
 	}
@@ -159,82 +159,65 @@ int start_glwnd(wndparam * wparam)
 	return 0;
 }
 
+EventHandlerStatus expose_event(XEvent *event) {
+
+	if (event->xexpose.count != 0) {
+		return EHS_OK;
+	}
+
+	XGetWindowAttributes(display, window, &x_wnd_attrs);
+	glViewport(0, 0, x_wnd_attrs.width, x_wnd_attrs.height);
+	DrawAQuad(0,0);
+	glXSwapBuffers(display, window);
+
+	return EHS_OK;
+}
+
+EventHandlerStatus key_press_event(XEvent *event) {
+	UNUSED(event);
+	glXMakeCurrent(display, None, NULL);
+	glXDestroyContext(display, glx_context);
+	XDestroyWindow(display, window);
+	XCloseDisplay(display);
+	return EHS_EXIT;
+}
+
+EventHandlerStatus motion_notify(XEvent *event) {
+	UNUSED(event);
+	XGetWindowAttributes(display, window, &x_wnd_attrs);
+	glViewport(0, 0, x_wnd_attrs.width, x_wnd_attrs.height);
+	DrawAQuad(report.xmotion.x, report.xmotion.y);
+	glXSwapBuffers(display, window);
+	printf("[%s:%d] MotionNotify: x = %d; y = %d\n"
+		, __FUNCTION__, __LINE__,
+		report.xmotion.x, report.xmotion.y);
+	return EHS_OK;
+}
+
 /*!
  * \brief glwnd
  * \param wparam
  * \return
  */
-int glwnd(wndparam *wparam)
-{
-	if (start_glwnd(wparam) < 0) {
+int glwnd(wndparam *wparam) {
+	int ret = 0;
+	if ((ret = start_glwnd(wparam)) < 0) {
+		return ret;
+	}
+
+	RegisterEventCallback(expose_event, Expose);
+	RegisterEventCallback(key_press_event, KeyPress);
+	RegisterEventCallback(motion_notify, MotionNotify);
+
+	EventHandlerStatus status = EventLoop(display);
+	if (status == EHS_EXIT) {
+		return 0;
+	}
+
+	if (status == EHS_FAILED) {
 		return -1;
 	}
 
-	while (1) {
-		XNextEvent(display, &report);
-
-		switch (report.type) {
-			case Expose:
-				if (report.xexpose.count != 0) {
-					break;
-				}
-
-				XGetWindowAttributes(display, window, &x_wnd_attrs);
-				glViewport(0, 0, x_wnd_attrs.width, x_wnd_attrs.height);
-				DrawAQuad(0,0);
-				glXSwapBuffers(display, window);
-
-				break;
-
-			case KeyPress:
-				glXMakeCurrent(display, None, NULL);
-				glXDestroyContext(display, glx_context);
-				XDestroyWindow(display, window);
-				XCloseDisplay(display);
-				return 0;
-
-			case MotionNotify:
-				XGetWindowAttributes(display, window, &x_wnd_attrs);
-				glViewport(0, 0, x_wnd_attrs.width, x_wnd_attrs.height);
-				DrawAQuad(report.xmotion.x, report.xmotion.y);
-				glXSwapBuffers(display, window);
-				printf("[%s:%d] MotionNotify: x = %d; y = %d\n"
-					, __FUNCTION__, __LINE__,
-					report.xmotion.x, report.xmotion.y);
-				break;
-
-			default:
-				break;
-		}
-	}
-
-	return 0;
+	return ret;
 }
 
-/*
- --------------------------------------------------------------------
- GC gc;
-				gc = XCreateGC(display, window, 0, NULL);
-
-				XSetForeground(display, gc, BlackPixel(display, 0));
-				XDrawString(display, window, gc, 20, 50, str, strlen(str));
-				XFreeGC(display, gc);
-				XFlush(display);
-	if ((display = XOpenDisplay(NULL)) == NULL) {
-		printf("[%s:%d] Can\'t connect to the X server!\n"
-			   , __func__, __LINE__);
-		return -1;
-	}
-
-	scr_num = DefaultScreen(display);
-
-	window = XCreateSimpleWindow(
-		display, RootWindow(display, scr_num),
-		100, 100, 640, 480, 0,
-		BlackPixel(display, scr_num),
-		WhitePixel(display, scr_num));
-
-	XSelectInput(display, window, ExposureMask | KeyPressMask);
-
-	XMapWindow(display, window);
-*/
