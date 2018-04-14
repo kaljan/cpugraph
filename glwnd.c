@@ -12,12 +12,25 @@
 #include <GL/glu.h>
 
 
+/*!
+ * \brief display
+ * \note
+ * Для работы с OpenGL
+ * нам нужно несколько обработчиков:
+ * - MouseMoveEvent(x,y)
+ * - MousePressEvent(button)
+ * - MouseReleaseEvent(button)
+ * - MouseWheelEvent(wheel)
+ * - KeyPressEvent(keycode)
+ * - KeyReleaseEvent(keycode)
+ */
+
+
 static Display *display;
 static Window window;
 static Window root_window;
 
 static Colormap colormap;
-static XEvent report;
 
 static XVisualInfo *x_visual_info;
 static XSetWindowAttributes x_set_wnd_attrs;
@@ -105,7 +118,7 @@ void DrawAQuad(int x, int y) {
  * \param wparam
  * \return
  */
-int start_glwnd(wndparam * wparam) {
+static int xGLWindowInit(wndparam * wparam) {
 	if (wparam == NULL) {
 		return -1;
 	}
@@ -139,6 +152,7 @@ int start_glwnd(wndparam * wparam) {
 	x_set_wnd_attrs.event_mask =
 		ExposureMask |
 		KeyPressMask |
+		ButtonPress |
 		Button1MotionMask |
 		PointerMotionMask;
 
@@ -159,8 +173,12 @@ int start_glwnd(wndparam * wparam) {
 	return 0;
 }
 
+/*!
+ * \brief expose_event
+ * \param event
+ * \return
+ */
 EventHandlerStatus expose_event(XEvent *event) {
-
 	if (event->xexpose.count != 0) {
 		return EHS_OK;
 	}
@@ -173,6 +191,11 @@ EventHandlerStatus expose_event(XEvent *event) {
 	return EHS_OK;
 }
 
+/*!
+ * \brief key_press_event
+ * \param event
+ * \return
+ */
 EventHandlerStatus key_press_event(XEvent *event) {
 	UNUSED(event);
 	glXMakeCurrent(display, None, NULL);
@@ -182,15 +205,20 @@ EventHandlerStatus key_press_event(XEvent *event) {
 	return EHS_EXIT;
 }
 
+/*!
+ * \brief motion_notify
+ * \param event
+ * \return
+ */
 EventHandlerStatus motion_notify(XEvent *event) {
 	UNUSED(event);
 	XGetWindowAttributes(display, window, &x_wnd_attrs);
 	glViewport(0, 0, x_wnd_attrs.width, x_wnd_attrs.height);
-	DrawAQuad(report.xmotion.x, report.xmotion.y);
+	DrawAQuad(event->xmotion.x, event->xmotion.y);
 	glXSwapBuffers(display, window);
 	printf("[%s:%d] MotionNotify: x = %d; y = %d\n"
 		, __FUNCTION__, __LINE__,
-		report.xmotion.x, report.xmotion.y);
+		event->xmotion.x, event->xmotion.y);
 	return EHS_OK;
 }
 
@@ -199,17 +227,17 @@ EventHandlerStatus motion_notify(XEvent *event) {
  * \param wparam
  * \return
  */
-int glwnd(wndparam *wparam) {
+int startGLWindow(wndparam *wparam) {
 	int ret = 0;
-	if ((ret = start_glwnd(wparam)) < 0) {
+	if ((ret = xGLWindowInit(wparam)) < 0) {
 		return ret;
 	}
 
 	RegisterEventCallback(expose_event, Expose);
 	RegisterEventCallback(key_press_event, KeyPress);
-	RegisterEventCallback(motion_notify, MotionNotify);
+	RegisterEventCallback(motion_notify, ButtonPress);
 
-	EventHandlerStatus status = EventLoop(display);
+	EventHandlerStatus status = EventHandlerLoop(display);
 	if (status == EHS_EXIT) {
 		return 0;
 	}

@@ -22,7 +22,7 @@ int RegisterEventCallback(EventCallback callback, int type) {
 	}
 
 	if (type < 2 || type > 36) {
-		return EHS_FAILED;
+		return -1;
 	}
 	e_callback[type] = callback;
 
@@ -44,8 +44,9 @@ static EventHandlerStatus event_handler(XEvent *event, Display *disp) {
 
 	int type = event->type;
 	if (type < 2 || type > 36) {
-		return EHS_FAILED;
+		return EHS_OK;
 	}
+
 	EventCallback clbk = e_callback[type];
 	if (clbk != NULL) {
 		return (*clbk)(event);
@@ -59,7 +60,7 @@ static EventHandlerStatus event_handler(XEvent *event, Display *disp) {
  * \param disp
  * \return
  */
-EventHandlerStatus EventLoop(Display *disp) {
+EventHandlerStatus EventHandlerLoop(Display *disp) {
 	EventHandlerStatus ret = EHS_OK;
 	if (disp == NULL) {
 		return EHS_FAILED;

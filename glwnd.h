@@ -11,6 +11,6 @@ typedef struct _wndparam {
 } wndparam;
 
 
-int glwnd(wndparam *wparam);
+int startGLWindow(wndparam *wparam);
 
 #endif // GLWND_H

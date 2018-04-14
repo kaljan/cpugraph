@@ -15,6 +15,6 @@ int main(int argc, char **argv)
 	wp.height = 480;
 	wp.border_width = 0;
 
-	return glwnd(&wp);
+	return startGLWindow(&wp);
 }
 
