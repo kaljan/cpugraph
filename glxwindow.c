@@ -222,13 +222,6 @@ EventHandlerStatus motion_notify(XEvent *event) {
 	return EHS_OK;
 }
 
-void stopGLWindow(void) {
-	glXMakeCurrent(display, None, NULL);
-	glXDestroyContext(display, glx_context);
-	XDestroyWindow(display, window);
-	XCloseDisplay(display);
-}
-
 /*!
  * \brief glwnd
  * \param wparam
@@ -256,3 +249,12 @@ int startGLWindow(wndparam *wparam) {
 	return ret;
 }
 
+/*!
+ * \brief stopGLWindow
+ */
+void stopGLWindow(void) {
+	glXMakeCurrent(display, None, NULL);
+	glXDestroyContext(display, glx_context);
+	XDestroyWindow(display, window);
+	XCloseDisplay(display);
+}

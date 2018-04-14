@@ -12,5 +12,6 @@ typedef struct _wndparam {
 
 
 int startGLWindow(wndparam *wparam);
+void stopGLWindow(void);
 
 #endif // GLXWINDOW_H
