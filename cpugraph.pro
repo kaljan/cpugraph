@@ -8,10 +8,10 @@ LIBS += -L/usr/lib/xorg/modules/extensions/
 LIBS += -lglx
 
 SOURCES += main.c \
-	eh.c \
-	glwnd.c
+    xeventhandler.c \
+    glxwindow.c
 
 HEADERS += \
-	eh.h \
-	glwnd.h \
-	gdefs.h
+	gdefs.h \
+    xeventhandler.h \
+    glxwindow.h

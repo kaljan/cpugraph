@@ -1,5 +1,5 @@
 #include "gdefs.h"
-#include "glwnd.h"
+#include "glxwindow.h"
 
 #include <stdio.h>
 
