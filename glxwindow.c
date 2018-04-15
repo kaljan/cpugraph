@@ -12,20 +12,6 @@
 #include <GL/glu.h>
 
 
-/*!
- * \brief display
- * \note
- * Для работы с OpenGL
- * нам нужно несколько обработчиков:
- * - MouseMoveEvent(x,y)
- * - MousePressEvent(button)
- * - MouseReleaseEvent(button)
- * - MouseWheelEvent(wheel)
- * - KeyPressEvent(keycode)
- * - KeyReleaseEvent(keycode)
- */
-
-
 static Display *display;
 static Window window;
 static Window root_window;
@@ -118,7 +104,7 @@ void DrawAQuad(int x, int y) {
  * \param wparam
  * \return
  */
-static int xGLWindowInit(wndparam * wparam) {
+static int xGLWindowInit(GLXWindowParams * wparam) {
 	if (wparam == NULL) {
 		return -1;
 	}
@@ -227,7 +213,7 @@ EventHandlerStatus motion_notify(XEvent *event) {
  * \param wparam
  * \return
  */
-int startGLWindow(wndparam *wparam) {
+int startGLXWindow(GLXWindowParams *wparam) {
 	int ret = 0;
 	if ((ret = xGLWindowInit(wparam)) < 0) {
 		return ret;
@@ -252,7 +238,7 @@ int startGLWindow(wndparam *wparam) {
 /*!
  * \brief stopGLWindow
  */
-void stopGLWindow(void) {
+void stopGLXWindow(void) {
 	glXMakeCurrent(display, None, NULL);
 	glXDestroyContext(display, glx_context);
 	XDestroyWindow(display, window);

@@ -9,9 +9,11 @@ LIBS += -lglx
 
 SOURCES += main.c \
     xeventhandler.c \
-    glxwindow.c
+    glxwindow.c \
+    glworld.c
 
 HEADERS += \
 	gdefs.h \
     xeventhandler.h \
-    glxwindow.h
+    glxwindow.h \
+    glworld.h
