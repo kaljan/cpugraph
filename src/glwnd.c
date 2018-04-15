@@ -1,6 +1,6 @@
 #include "gdefs.h"
-#include "glxwindow.h"
-#include "xeventhandler.h"
+#include "glwnd.h"
+#include "eh.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -10,6 +10,20 @@
 #include <GL/gl.h>
 #include <GL/glx.h>
 #include <GL/glu.h>
+
+
+/*!
+ * \brief display
+ * \note
+ * Для работы с OpenGL
+ * нам нужно несколько обработчиков:
+ * - MouseMoveEvent(x,y)
+ * - MousePressEvent(button)
+ * - MouseReleaseEvent(button)
+ * - MouseWheelEvent(wheel)
+ * - KeyPressEvent(keycode)
+ * - KeyReleaseEvent(keycode)
+ */
 
 
 static Display *display;
@@ -104,7 +118,7 @@ void DrawAQuad(int x, int y) {
  * \param wparam
  * \return
  */
-static int xGLWindowInit(GLXWindowParams * wparam) {
+static int xGLWindowInit(wndparam * wparam) {
 	if (wparam == NULL) {
 		return -1;
 	}
@@ -213,7 +227,7 @@ EventHandlerStatus motion_notify(XEvent *event) {
  * \param wparam
  * \return
  */
-int startGLXWindow(GLXWindowParams *wparam) {
+int startGLWindow(wndparam *wparam) {
 	int ret = 0;
 	if ((ret = xGLWindowInit(wparam)) < 0) {
 		return ret;
@@ -235,12 +249,3 @@ int startGLXWindow(GLXWindowParams *wparam) {
 	return ret;
 }
 
-/*!
- * \brief stopGLWindow
- */
-void stopGLXWindow(void) {
-	glXMakeCurrent(display, None, NULL);
-	glXDestroyContext(display, glx_context);
-	XDestroyWindow(display, window);
-	XCloseDisplay(display);
-}

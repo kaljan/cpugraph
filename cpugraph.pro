@@ -7,11 +7,16 @@ LIBS += -lGLU
 LIBS += -L/usr/lib/xorg/modules/extensions/
 LIBS += -lglx
 
-SOURCES += main.c \
-    xeventhandler.c \
-    glxwindow.c
+INCLUDEPATH += ./src/
+
+SOURCES += \
+	src/main.c \
+	src/xeventhandler.c \
+	src/glxwindow.c \
+	src/glworld.c
 
 HEADERS += \
-	gdefs.h \
-    xeventhandler.h \
-    glxwindow.h
+	src/gdefs.h \
+	src/xeventhandler.h \
+	src/glxwindow.h \
+	src/glworld.h
