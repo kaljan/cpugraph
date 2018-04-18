@@ -13,8 +13,10 @@
  * - MouseWheelEvent(wheel)
  * - KeyPressEvent(keycode)
  * - KeyReleaseEvent(keycode)
+ * - initializeGL
+ * - paintGL
+ * - resizeGL
  */
-
 
 typedef struct _wndparam {
 	int	x;
