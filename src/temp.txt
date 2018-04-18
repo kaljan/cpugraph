@@ -382,3 +382,32 @@ event_callback last_event_callback;
 */
 
 
+//	int fnts = 0;
+//#if 0
+//	char **fontlist = XListFonts(display, "-*-*-*-*-*-*-*-*-*-*-*-10", 100, &fnts);
+
+//	printf("[%s:%d] Fonts %d found\n"
+//		, __func__, __LINE__, fnts);
+
+//	if (fontlist != NULL) {
+//		while (fnts--) {
+//			printf("[%s:%d] Font: %s\n"
+//				, __func__, __LINE__, *fontlist);
+//			fontlist++;
+//		}
+//	}
+//#endif
+
+//#include <string.h>
+//#include <X11/X.h>
+//#include <X11/Xlib.h>
+//#include <X11/XKBlib.h>
+//#include <GL/gl.h>
+//#include <GL/glu.h>
+//#include <X11/Xdefs.h>
+
+//#include <unistd.h>
+//#include <X11/Xlib.h>
+//#include <time.h>
+
+

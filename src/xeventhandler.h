@@ -1,9 +1,7 @@
 #ifndef XEVENTHANDLER_H
 #define XEVENTHANDLER_H
 
-
 #include <X11/Xlib.h>
-
 
 typedef enum {
 	EHS_OK = 1,

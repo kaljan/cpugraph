@@ -4,15 +4,10 @@
 #include "xeventhandler.h"
 
 #include <stdio.h>
-#include <string.h>
 #include <unistd.h>
 
-#include <X11/X.h>
-#include <X11/Xlib.h>
-#include <X11/XKBlib.h>
-#include <GL/gl.h>
 #include <GL/glx.h>
-#include <GL/glu.h>
+#include <X11/Xatom.h>
 
 
 static Display *display;
@@ -34,44 +29,30 @@ static GLint gl_attrs[] = {
 	None
 };
 
+
 /*!
  * \brief setupFont
  */
-static void setupFont(void) {
+static void setupFont (void) {
 	char           font_string[128];
 	XFontStruct    *font_struct;
+	unsigned long ret;
 
-	int fnts = 0;
-
-	char **fontlist = XListFonts(display, "-*-*-*-*-*-*-*-*-*-*-*-10", 100, &fnts);
-
-	printf("[%s:%d] Fonts %d found\n"
-		, __func__, __LINE__, fnts);
-
-	if (fontlist != NULL) {
-		while (fnts--) {
-			printf("[%s:%d] Font: %s\n"
-				, __func__, __LINE__, *fontlist);
-			fontlist++;
-		}
-	}
 
 	for(int font_size = 14; font_size < 32; font_size += 2) {
-		sprintf(font_string, "-*-*-*-r-*-*-%i-*", font_size);
+		sprintf(font_string, "-misc-fixed-medium-r-normal--%i-*"
+			, font_size);
 		font_struct = XLoadQueryFont(display, font_string);
 
-		printf("[%s:%d] Search font: %s\n"
-			, __func__, __LINE__, font_string);
-
 		if(font_struct != NULL) {
-			printf("[%s:%d] Font \'%s\' found\n"
-				, __func__, __LINE__, font_string);
-
 			glXUseXFont(font_struct->fid, 32, 192, 32);
+			if (XGetFontProperty(font_struct, XA_FONT, &ret)) {
+				printf("[%s:%d] Font: %s\n"
+					, __func__, __LINE__, XGetAtomName(display,
+				(Atom)ret));
+			}
 			break;
 		}
-		printf("[%s:%d] Font \'%s\' not found\n"
-			, __func__, __LINE__, font_string);
 	}
 }
 
@@ -80,7 +61,7 @@ static void setupFont(void) {
  * \param wparam
  * \return
  */
-static int xGLWindowInit(GLXWindowParams * wparam) {
+static int xGLWindowInit (GLXWindowParams * wparam) {
 	if (wparam == NULL) {
 		return -1;
 	}
@@ -143,7 +124,7 @@ static int xGLWindowInit(GLXWindowParams * wparam) {
  * \param event
  * \return
  */
-EventHandlerStatus expose_event(XEvent *event) {
+static EventHandlerStatus expose_event (XEvent *event) {
 	if (event->xexpose.count != 0) {
 		return EHS_OK;
 	}
@@ -160,9 +141,7 @@ EventHandlerStatus expose_event(XEvent *event) {
  * \param event
  * \return
  */
-EventHandlerStatus key_press_event(XEvent *event) {
-//	UNUSED(event);
-
+static EventHandlerStatus key_press_event (XEvent *event) {
 	if (event == NULL) {
 		return EHS_OK;
 	}
@@ -187,7 +166,7 @@ EventHandlerStatus key_press_event(XEvent *event) {
  * \param event
  * \return
  */
-EventHandlerStatus updateWindow(XEvent *event) {
+static EventHandlerStatus updateWindow (XEvent *event) {
 	UNUSED(event);
 
 	paintGL();
@@ -201,7 +180,7 @@ EventHandlerStatus updateWindow(XEvent *event) {
  * \param wparam
  * \return
  */
-int startGLXWindow(GLXWindowParams *wparam) {
+int startGLXWindow (GLXWindowParams *wparam) {
 	int ret = 0;
 	if ((ret = xGLWindowInit(wparam)) < 0) {
 		return ret;
@@ -227,10 +206,9 @@ int startGLXWindow(GLXWindowParams *wparam) {
 /*!
  * \brief stopGLWindow
  */
-void stopGLXWindow(void) {
+void stopGLXWindow (void) {
 	glXMakeCurrent(display, None, NULL);
 	glXDestroyContext(display, glx_context);
 	XDestroyWindow(display, window);
 	XCloseDisplay(display);
 }
-

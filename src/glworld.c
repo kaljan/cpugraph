@@ -1,17 +1,12 @@
-#include <GL/gl.h>
-#include <GL/glx.h>
-#include <GL/glu.h>
-#include <X11/Xlib.h>
+#include "glworld.h"
 
 #include <string.h>
 #include <stdio.h>
-#include <unistd.h>
-
 #include <sys/time.h>
-#include <time.h>
 
-
-#include "glworld.h"
+#include <GL/gl.h>
+#include <GL/glx.h>
+#include <GL/glu.h>
 
 
 void initTimer(void);
@@ -85,6 +80,9 @@ void rotateCube (void) {
 	glGetFloatv(GL_MODELVIEW_MATRIX, rot_matrix);
 }
 
+/*!
+ * \brief update
+ */
 static void update(void) {
 	char str[256];
 
