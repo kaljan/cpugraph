@@ -1,12 +1,15 @@
 #include "gdefs.h"
 #include "glxwindow.h"
+#include "glworld.h"
 #include "xeventhandler.h"
 
 #include <stdio.h>
 #include <string.h>
+#include <unistd.h>
 
 #include <X11/X.h>
 #include <X11/Xlib.h>
+#include <X11/XKBlib.h>
 #include <GL/gl.h>
 #include <GL/glx.h>
 #include <GL/glu.h>
@@ -31,72 +34,45 @@ static GLint gl_attrs[] = {
 	None
 };
 
-
 /*!
- * \brief DrawAQuad
- * \param x
- * \param y
+ * \brief setupFont
  */
-void DrawAQuad(int x, int y) {
+static void setupFont(void) {
+	char           font_string[128];
+	XFontStruct    *font_struct;
 
-	static double xx = 0.0;
-	char str[80], font_string[128];
-	XFontStruct *font_struct;
+	int fnts = 0;
 
-	glClearColor(0, 0, 0, 0);
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	char **fontlist = XListFonts(display, "-*-*-*-*-*-*-*-*-*-*-*-10", 100, &fnts);
 
-	for(int font_size = 14; font_size < 32; font_size += 2) {
-		sprintf(font_string, "*mono*--%i-*", font_size);
-		font_struct = XLoadQueryFont(display, font_string);
+	printf("[%s:%d] Fonts %d found\n"
+		, __func__, __LINE__, fnts);
 
-		if(font_struct != NULL) {
-				glXUseXFont(font_struct->fid, 32, 192, 32);
-				break;
+	if (fontlist != NULL) {
+		while (fnts--) {
+			printf("[%s:%d] Font: %s\n"
+				, __func__, __LINE__, *fontlist);
+			fontlist++;
 		}
 	}
 
-	glMatrixMode(GL_PROJECTION);
-	glLoadIdentity();
-	glOrtho(-1.0, 1.0, -1.0, 1.0, 1.0, 20.0);
+	for(int font_size = 14; font_size < 32; font_size += 2) {
+		sprintf(font_string, "-*-*-*-r-*-*-%i-*", font_size);
+		font_struct = XLoadQueryFont(display, font_string);
 
-	glMatrixMode(GL_MODELVIEW);
-	glLoadIdentity();
-	gluLookAt(
-		xx, xx, 10.0,
-		0.0, 0.0, 0.0,
-		0.0, 1.0, 0.0);
+		printf("[%s:%d] Search font: %s\n"
+			, __func__, __LINE__, font_string);
 
-	glBegin(GL_QUADS);
-	glColor3f(1.0, 0.0, 0.0); glVertex3f(-0.5, -0.5, 0.0);
-	glColor3f(1.0, 1.0, 0.0); glVertex3f( 0.5, -0.5, 0.0);
-	glColor3f(1.0, 0.5, 1.0); glVertex3f( 0.5,  0.5, 0.0);
-	glColor3f(1.0, 0.1, 0.5); glVertex3f(-0.5,  0.5, 0.0);
+		if(font_struct != NULL) {
+			printf("[%s:%d] Font \'%s\' found\n"
+				, __func__, __LINE__, font_string);
 
-	glColor3f(0.0, 1.0, 0.0); glVertex3f(0.0, -0.5, -0.5);
-	glColor3f(0.0, 1.0, 0.0); glVertex3f(0.0,  0.5, -0.5);
-	glColor3f(0.0, 1.0, 0.0); glVertex3f(0.0,  0.5,  0.5);
-	glColor3f(0.0, 1.0, 0.0); glVertex3f(0.0, -0.5,  0.5);
-
-	glEnd();
-
-	xx = xx + 0.1;
-	if (xx > 12.0) {
-		xx = 0.0;
+			glXUseXFont(font_struct->fid, 32, 192, 32);
+			break;
+		}
+		printf("[%s:%d] Font \'%s\' not found\n"
+			, __func__, __LINE__, font_string);
 	}
-
-	glMatrixMode(GL_PROJECTION);
-	glLoadIdentity();
-	glOrtho(0, (float)x_wnd_attrs.width, 0, (float)x_wnd_attrs.height, -1., 1.);
-
-	glMatrixMode(GL_MODELVIEW);
-	glLoadIdentity();
-	glColor3f(1.0, 1.0, 1.0);
-
-	sprintf(str, "x = %d; y = %d;", x, y);
-	glRasterPos2i(x, y);
-	glCallLists(strlen(str), GL_UNSIGNED_BYTE, str);
-
 }
 
 /*!
@@ -137,10 +113,7 @@ static int xGLWindowInit(GLXWindowParams * wparam) {
 	x_set_wnd_attrs.colormap = colormap;
 	x_set_wnd_attrs.event_mask =
 		ExposureMask |
-		KeyPressMask |
-		ButtonPress |
-		Button1MotionMask |
-		PointerMotionMask;
+		KeyPressMask;
 
 	window = XCreateWindow(display, root_window,
 		wparam->x, wparam->y, wparam->width, wparam->height,
@@ -152,9 +125,15 @@ static int xGLWindowInit(GLXWindowParams * wparam) {
 	XMapWindow(display, window);
 	XStoreName(display, window, "OpenGL test application");
 
-	glx_context = glXCreateContext(display, x_visual_info, NULL, GL_TRUE);
+	if ((glx_context = glXCreateContext(display,
+		x_visual_info, NULL, GL_TRUE)) == NULL) {
+		printf("[%s:%d] cannot create gl context\n", __func__, __LINE__);
+		return -1;
+	}
 	glXMakeCurrent(display, window, glx_context);
-	glEnable(GL_DEPTH_TEST);
+
+	setupFont();
+	initializeGL();
 
 	return 0;
 }
@@ -170,8 +149,7 @@ EventHandlerStatus expose_event(XEvent *event) {
 	}
 
 	XGetWindowAttributes(display, window, &x_wnd_attrs);
-	glViewport(0, 0, x_wnd_attrs.width, x_wnd_attrs.height);
-	DrawAQuad(0,0);
+	resizeGL(x_wnd_attrs.width, x_wnd_attrs.height);
 	glXSwapBuffers(display, window);
 
 	return EHS_OK;
@@ -183,28 +161,38 @@ EventHandlerStatus expose_event(XEvent *event) {
  * \return
  */
 EventHandlerStatus key_press_event(XEvent *event) {
-	UNUSED(event);
-	glXMakeCurrent(display, None, NULL);
-	glXDestroyContext(display, glx_context);
-	XDestroyWindow(display, window);
-	XCloseDisplay(display);
-	return EHS_EXIT;
+//	UNUSED(event);
+
+	if (event == NULL) {
+		return EHS_OK;
+	}
+
+	if (event->type != KeyPress) {
+		return EHS_OK;
+	}
+
+	int kcode = XLookupKeysym(&event->xkey, 0);
+
+	if (kcode == XK_Escape) {
+		stopGLXWindow();
+		return EHS_EXIT;
+	}
+
+	keyPressEvent(kcode);
+	return EHS_OK;
 }
 
 /*!
- * \brief motion_notify
+ * \brief updateWindow
  * \param event
  * \return
  */
-EventHandlerStatus motion_notify(XEvent *event) {
+EventHandlerStatus updateWindow(XEvent *event) {
 	UNUSED(event);
-	XGetWindowAttributes(display, window, &x_wnd_attrs);
-	glViewport(0, 0, x_wnd_attrs.width, x_wnd_attrs.height);
-	DrawAQuad(event->xmotion.x, event->xmotion.y);
+
+	paintGL();
 	glXSwapBuffers(display, window);
-	printf("[%s:%d] MotionNotify: x = %d; y = %d\n"
-		, __FUNCTION__, __LINE__,
-		event->xmotion.x, event->xmotion.y);
+	usleep(1000);
 	return EHS_OK;
 }
 
@@ -221,9 +209,10 @@ int startGLXWindow(GLXWindowParams *wparam) {
 
 	RegisterEventCallback(expose_event, Expose);
 	RegisterEventCallback(key_press_event, KeyPress);
-	RegisterEventCallback(motion_notify, ButtonPress);
 
-	EventHandlerStatus status = EventHandlerLoop(display);
+	registerLoopCallback(updateWindow);
+
+	EventHandlerStatus status = EventHandlerLoop(display, window);
 	if (status == EHS_EXIT) {
 		return 0;
 	}
@@ -244,3 +233,4 @@ void stopGLXWindow(void) {
 	XDestroyWindow(display, window);
 	XCloseDisplay(display);
 }
+

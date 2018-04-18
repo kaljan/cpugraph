@@ -21,3 +21,6 @@ HEADERS += \
 	src/glxwindow.h \
 	src/glworld.h
 
+DISTFILES += \
+    src/temp.txt
+
