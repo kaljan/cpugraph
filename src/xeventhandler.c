@@ -55,6 +55,7 @@ static EventHandlerStatus pollEvent (XEvent *event,
 	if (type < 2 || type > 36) {
 		return EHS_OK;
 	}
+
 	if (XCheckTypedWindowEvent(disp, wnd, type, event)) {
 		if (clbk != NULL) {
 			return (*clbk)(event);
@@ -73,6 +74,7 @@ static EventHandlerStatus pollEvent (XEvent *event,
 static EventHandlerStatus pollEventLoop (XEvent *event,
 	Display *disp, Window wnd) {
 	EventHandlerStatus ret = EHS_OK;
+
 	for (int i = 2; i < 37; i++) {
 		if ((ret = pollEvent(event, disp, wnd,
 			i, e_callback[i])) != EHS_OK) {
@@ -126,31 +128,51 @@ static EventHandlerStatus threadEvent (XEvent *event,
 	if (type < 2 || type > 36) {
 		return EHS_OK;
 	}
+	XLockDisplay(disp);
+
 	if (XCheckTypedWindowEvent(disp, wnd, type, event)) {
 		if (clbk != NULL) {
-			return (*clbk)(event);
+			int ret = (*clbk)(event);
+			XUnlockDisplay(disp);
+			return ret;
 		}
 	}
+	XUnlockDisplay(disp);
 	return EHS_OK;
 }
 
-/**
- * @brief treadEventLoop
- * @param event
- * @param disp
- * @param wnd
- * @return
+/*!
+ * \brief treadEventLoop
+ * \param event
+ * \param disp
+ * \param wnd
+ * \return
  */
 static EventHandlerStatus treadEventLoop (XEvent *event,
 	Display *disp, Window wnd) {
 //	printf("[%s:%d] --- \n", __func__, __LINE__);
 	EventHandlerStatus ret = EHS_OK;
-	for (int i = 2; i < 37; i++) {
-		if ((ret = threadEvent(event, disp, wnd,
-			i, e_callback[i])) != EHS_OK) {
-			break;
-		}
+
+//	XLockDisplay(disp);
+	XNextEvent(disp, event);
+
+	int type = event->type;
+	if (type < 2 || type > 36) {
+		return EHS_OK;
 	}
+	EventCallback clbk = e_callback[type];
+	if (clbk != NULL) {
+		return (*clbk)(event);
+	}
+
+//	XUnlockDisplay(disp);
+
+//	for (int i = 2; i < 37; i++) {
+//		if ((ret = threadEvent(event, disp, wnd,
+//			i, e_callback[i])) != EHS_OK) {
+//			break;
+//		}
+//	}
 	return ret;
 }
 
@@ -176,6 +198,9 @@ void *evendHandlerThread(void *arg) {
  * \param disp
  * \param wnd
  * \return
+ *
+ * https://www.systutorials.com/docs/linux/man/3-XInitThreads/
+ *
  */
 EventHandlerStatus eventHandlerThreadLoop(Display *disp, Window wnd) {
 
@@ -189,15 +214,20 @@ EventHandlerStatus eventHandlerThreadLoop(Display *disp, Window wnd) {
 	window = wnd;
 
 	printf("[%s:%d] --- \n", __func__, __LINE__);
-	if (!(t_ret = pthread_create(&thread, NULL, evendHandlerThread, NULL))) {
+
+	XLockDisplay(disp);
+	t_ret = pthread_create(&thread, NULL, evendHandlerThread, NULL);
+	if (t_ret < 0) {
 		errno = t_ret;
 		printf("[%s:%d] Tread create failed! %s\n"
 			, __func__, __LINE__, strerror(errno));
 		return EHS_FAILED;
 	}
 	printf("[%s:%d] --- \n", __func__, __LINE__);
+	XUnlockDisplay(disp);
 
 	while (1) {
+
 		if (loop_callback != NULL) {
 			(*loop_callback)(&x_event);
 		}

@@ -61,10 +61,18 @@ static void setupFont (void) {
  * \param wparam
  * \return
  */
-static int xGLWindowInit (GLXWindowParams * wparam) {
+static int glxWindowInit (GLXWindowParams * wparam) {
 	if (wparam == NULL) {
 		return -1;
 	}
+
+#ifdef USE_X_THREAD
+	if (XInitThreads() == 0) {
+		printf("[%s:%d] XInitThreads() failed\n"
+			, __func__, __LINE__);
+		return -1;
+	}
+#endif
 
 	if ((display = XOpenDisplay(NULL)) == NULL) {
 		printf("[%s:%d] Can\'t connect to the X server!\n"
@@ -131,10 +139,11 @@ static EventHandlerStatus glxExposeEvent (XEvent *event) {
 	if (event->xexpose.count != 0) {
 		return EHS_OK;
 	}
-
+	XLockDisplay(display);
 	XGetWindowAttributes(display, window, &x_wnd_attrs);
 	resizeGL(x_wnd_attrs.width, x_wnd_attrs.height);
 	glXSwapBuffers(display, window);
+	XUnlockDisplay(display);
 
 	return EHS_OK;
 }
@@ -227,9 +236,11 @@ static EventHandlerStatus glxMouseMoveEvent (XEvent *event) {
 static EventHandlerStatus updateWindow (XEvent *event) {
 	UNUSED(event);
 
+	XLockDisplay(display);
 	paintGL();
 	glXSwapBuffers(display, window);
 //	usleep(1000);
+	XUnlockDisplay(display);
 	return EHS_OK;
 }
 
@@ -240,7 +251,7 @@ static EventHandlerStatus updateWindow (XEvent *event) {
  */
 int startGLXWindow (GLXWindowParams *wparam) {
 	int ret = 0;
-	if ((ret = xGLWindowInit(wparam)) < 0) {
+	if ((ret = glxWindowInit(wparam)) < 0) {
 		return ret;
 	}
 
@@ -252,8 +263,11 @@ int startGLXWindow (GLXWindowParams *wparam) {
 
 	registerLoopCallback(updateWindow);
 
+#ifdef USE_X_THREAD
+	EventHandlerStatus status = eventHandlerThreadLoop(display, window);
+#else
 	EventHandlerStatus status = eventHandlerLoop(display, window);
-//	EventHandlerStatus status = eventHandlerThreadLoop(display, window);
+#endif
 
 	if (status == EHS_FAILED) {
 		return -1;

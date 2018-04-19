@@ -1,8 +1,10 @@
 TEMPLATE = app
+
 CONFIG -= qt
 CONFIG += x11
 CONFIG += opengl
-CONFIG += pthread
+
+DEFINES += USE_X_THREAD
 
 LIBS += -lGLU
 LIBS += -L/usr/lib/xorg/modules/extensions/
