@@ -253,15 +253,13 @@ int startGLXWindow (GLXWindowParams *wparam) {
 	registerLoopCallback(updateWindow);
 
 	EventHandlerStatus status = eventHandlerLoop(display, window);
-	if (status == EHS_EXIT) {
-		return 0;
-	}
+//	EventHandlerStatus status = eventHandlerThreadLoop(display, window);
 
 	if (status == EHS_FAILED) {
 		return -1;
 	}
 
-	return ret;
+	return 0;
 }
 
 /*!

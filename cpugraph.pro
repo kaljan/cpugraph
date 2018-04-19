@@ -2,10 +2,14 @@ TEMPLATE = app
 CONFIG -= qt
 CONFIG += x11
 CONFIG += opengl
+CONFIG += pthread
 
 LIBS += -lGLU
 LIBS += -L/usr/lib/xorg/modules/extensions/
 LIBS += -lglx
+LIBS += -lpthread
+
+QMAKE_CFLAGS += -pthread
 
 INCLUDEPATH += ./src/
 
@@ -22,5 +26,5 @@ HEADERS += \
 	src/glworld.h
 
 DISTFILES += \
-    src/temp.txt
+	src/temp.txt
 

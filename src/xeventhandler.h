@@ -14,5 +14,6 @@ typedef EventHandlerStatus (*EventCallback)(XEvent *event);
 void registerLoopCallback(EventCallback callback);
 int registerEventCallback(EventCallback callback, int type);
 EventHandlerStatus eventHandlerLoop(Display *disp, Window wnd);
+EventHandlerStatus eventHandlerThreadLoop(Display *disp, Window wnd);
 
 #endif // XEVENTHANDLER_H
