@@ -2,21 +2,9 @@
 #define GLXWINDOW_H
 
 
-/*!
- * \brief display
- * \note
- * Для работы с OpenGL
- * нам нужно несколько обработчиков:
- * - MouseMoveEvent(x,y)
- * - MousePressEvent(button)
- * - MouseReleaseEvent(button)
- * - MouseWheelEvent(wheel)
- * - KeyPressEvent(keycode)
- * - KeyReleaseEvent(keycode)
- * - initializeGL
- * - paintGL
- * - resizeGL
- */
+#define MouseButton1	1
+#define MouseButton2	2
+#define MouseButton3	3
 
 typedef struct _wndparam {
 	int	x;
@@ -25,6 +13,12 @@ typedef struct _wndparam {
 	unsigned int height;
 	unsigned int border_width;
 } GLXWindowParams;
+
+typedef struct _mouse_event_t {
+	unsigned int button;
+	int x;
+	int y;
+} mouse_event_t;
 
 
 int startGLXWindow(GLXWindowParams *wparam);

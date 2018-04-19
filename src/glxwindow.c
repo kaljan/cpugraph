@@ -94,7 +94,10 @@ static int xGLWindowInit (GLXWindowParams * wparam) {
 	x_set_wnd_attrs.colormap = colormap;
 	x_set_wnd_attrs.event_mask =
 		ExposureMask |
-		KeyPressMask;
+		KeyPressMask |
+		ButtonPressMask |
+		ButtonReleaseMask |
+		PointerMotionMask;
 
 	window = XCreateWindow(display, root_window,
 		wparam->x, wparam->y, wparam->width, wparam->height,
@@ -124,7 +127,7 @@ static int xGLWindowInit (GLXWindowParams * wparam) {
  * \param event
  * \return
  */
-static EventHandlerStatus expose_event (XEvent *event) {
+static EventHandlerStatus glxExposeEvent (XEvent *event) {
 	if (event->xexpose.count != 0) {
 		return EHS_OK;
 	}
@@ -141,7 +144,7 @@ static EventHandlerStatus expose_event (XEvent *event) {
  * \param event
  * \return
  */
-static EventHandlerStatus key_press_event (XEvent *event) {
+static EventHandlerStatus glxKeyPressEvent (XEvent *event) {
 	if (event == NULL) {
 		return EHS_OK;
 	}
@@ -162,6 +165,61 @@ static EventHandlerStatus key_press_event (XEvent *event) {
 }
 
 /*!
+ * \brief glxMousePressEvent
+ * \param event
+ * \return
+ */
+static EventHandlerStatus glxMousePressEvent (XEvent *event) {
+	if (event == NULL) {
+		return EHS_OK;
+	}
+
+	if (event->type != ButtonPress) {
+		return EHS_OK;
+	}
+
+	static mouse_event_t mouse_event;
+	mouse_event.button = event->xbutton.button;
+	mouse_event.x = event->xbutton.x;
+	mouse_event.y = event->xbutton.y;
+	mousePressEvent(&mouse_event);
+
+	return EHS_OK;
+}
+
+static EventHandlerStatus glxMouseReleaseEvent (XEvent *event) {
+
+	if (event == NULL) {
+		return EHS_OK;
+	}
+
+	if (event->type != ButtonRelease) {
+		return EHS_OK;
+	}
+	static mouse_event_t mouse_event;
+	mouse_event.button = event->xbutton.button;
+	mouse_event.x = event->xbutton.x;
+	mouse_event.y = event->xbutton.y;
+	mouseReleaseEvent(&mouse_event);
+
+	return EHS_OK;
+}
+
+static EventHandlerStatus glxMouseMoveEvent (XEvent *event) {
+	if (event == NULL) {
+		return EHS_OK;
+	}
+
+	if (event->type != MotionNotify) {
+		return EHS_OK;
+	}
+
+	mouseMoveEvent(event->xmotion.x, event->xmotion.y);
+
+	return EHS_OK;
+}
+
+/*!
  * \brief updateWindow
  * \param event
  * \return
@@ -171,7 +229,7 @@ static EventHandlerStatus updateWindow (XEvent *event) {
 
 	paintGL();
 	glXSwapBuffers(display, window);
-	usleep(1000);
+//	usleep(1000);
 	return EHS_OK;
 }
 
@@ -186,12 +244,15 @@ int startGLXWindow (GLXWindowParams *wparam) {
 		return ret;
 	}
 
-	RegisterEventCallback(expose_event, Expose);
-	RegisterEventCallback(key_press_event, KeyPress);
+	registerEventCallback(glxExposeEvent, Expose);
+	registerEventCallback(glxKeyPressEvent, KeyPress);
+	registerEventCallback(glxMousePressEvent, ButtonPress);
+	registerEventCallback(glxMouseReleaseEvent, ButtonRelease);
+	registerEventCallback(glxMouseMoveEvent, MotionNotify);
 
 	registerLoopCallback(updateWindow);
 
-	EventHandlerStatus status = EventHandlerLoop(display, window);
+	EventHandlerStatus status = eventHandlerLoop(display, window);
 	if (status == EHS_EXIT) {
 		return 0;
 	}

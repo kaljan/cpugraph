@@ -1,3 +1,19 @@
+/*!
+ * \brief display
+ * \note
+ * Для работы с OpenGL
+ * нам нужно несколько обработчиков:
+ * - MouseMoveEvent(x,y)
+ * - MousePressEvent(button)
+ * - MouseReleaseEvent(button)
+ * - MouseWheelEvent(wheel)
+ * - KeyPressEvent(keycode)
+ * - KeyReleaseEvent(keycode)
+ * - initializeGL
+ * - paintGL
+ * - resizeGL
+ */
+
 ///*!
 // * \brief motion_notify
 // * \param event

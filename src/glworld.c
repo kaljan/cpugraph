@@ -1,4 +1,5 @@
 #include "glworld.h"
+#include "gdefs.h"
 
 #include <string.h>
 #include <stdio.h>
@@ -20,6 +21,8 @@ struct timeval tv, tv0;
 int Frame = 1, FramesPerFPS, wnd_width, wnd_height;
 float rot_z_vel = 50.0, rot_y_vel = 30.0;
 float aspect_ratio;
+
+int mouse_x = 0, mouse_y = 0, button_pessed = 0, mx = 0, my = 0;
 
 
 /*!
@@ -83,8 +86,9 @@ void rotateCube (void) {
 /*!
  * \brief update
  */
-static void update(void) {
+static void updateGL(void) {
 	char str[256];
+	char mouse_str[64];
 
 	glViewport(0, 0, wnd_width, wnd_height);
 
@@ -113,14 +117,24 @@ static void update(void) {
 
 	glColor3f(1.0, 1.0, 1.0);
 
-	sprintf(str, "%4.1f seconds * %4.1f fps at %i x %i"
+	sprintf(str, "%4.1f seconds * %4.1f fps at %i x %i; mouse(%d, %d);"
 		, TimeCounter
 		, FPS
 		, wnd_width
-		, wnd_height);
+		, wnd_height
+		, mx
+		, my);
 
 	glRasterPos2i(10, 10);
 	glCallLists(strlen(str), GL_UNSIGNED_BYTE, str);
+
+	if (button_pessed != 0) {
+		if (mouse_x > 0 && mouse_y > 0) {
+			sprintf(mouse_str, "x = %d, y = %d", mouse_x, mouse_y);
+			glRasterPos2i(mouse_x, wnd_height - mouse_y);
+			glCallLists(strlen(mouse_str), GL_UNSIGNED_BYTE, mouse_str);
+		}
+	}
 
 	sprintf(str, "<up,down,left,right> rotate cube * <F1> stop rotation ");
 	glRasterPos2i(10, wnd_height - 32);
@@ -152,7 +166,7 @@ void resizeGL (int width, int height) {
 	wnd_width = width;
 	wnd_height = height;
 	aspect_ratio = (height > 0) ? (float)width / (float)height : 0.0f;
-	update();
+	updateGL();
 
 }
 
@@ -163,7 +177,7 @@ void paintGL (void) {
 	updateTimer();
 	getFPS();
 	rotateCube();
-	update();
+	updateGL();
 }
 
 /*!
@@ -203,16 +217,79 @@ void kyeReleaseEvent (void) {
 
 }
 
-void mouseMoveEvent (void) {
-
+void mouseMoveEvent (int x, int y) {
+	mx = x; my = y;
+	if (button_pessed != 0) {
+		mouse_x = x;
+		mouse_y = y;
+	}
 }
 
-void mousePressEvent (void) {
+/*!
+ * \brief mousePressEvent
+ * \param event
+ */
+void mousePressEvent (mouse_event_t *event) {
+	if (event == NULL) {
+		return;
+	}
 
+	printf("[%s:%d] button press: 0x%08X; x: %d; y: %d;\n"
+	, __func__
+	, __LINE__
+	, event->button
+	, event->x
+	, event->y);
+
+	switch (event->button) {
+	case MouseButton1:
+		button_pessed = 1;
+		mouse_x = event->x;
+		mouse_y = event->y;
+		break;
+
+	case MouseButton2:
+		break;
+
+	case MouseButton3:
+		break;
+
+	default:
+		break;
+	}
 }
 
-void mouseReleaseEvent (void) {
+/*!
+ * \brief mouseReleaseEvent
+ * \param event
+ */
+void mouseReleaseEvent (mouse_event_t *event) {
 
+	if (event == NULL) {
+		return;
+	}
+
+	printf("[%s:%d] button release: 0x%08X; x: %d; y: %d;\n"
+	, __func__
+	, __LINE__
+	, event->button
+	, event->x
+	, event->y);
+
+	switch (event->button) {
+	case MouseButton1:
+		button_pessed = 0;
+		break;
+
+	case MouseButton2:
+		break;
+
+	case MouseButton3:
+		break;
+
+	default:
+		break;
+	}
 }
 
 void mouseWheelEvent (void) {

@@ -12,7 +12,7 @@ typedef enum {
 typedef EventHandlerStatus (*EventCallback)(XEvent *event);
 
 void registerLoopCallback(EventCallback callback);
-int RegisterEventCallback(EventCallback callback, int type);
-EventHandlerStatus EventHandlerLoop(Display *disp, Window wnd);
+int registerEventCallback(EventCallback callback, int type);
+EventHandlerStatus eventHandlerLoop(Display *disp, Window wnd);
 
 #endif // XEVENTHANDLER_H

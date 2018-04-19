@@ -25,7 +25,7 @@ void registerLoopCallback(EventCallback callback) {
  * \param type
  * \return
  */
-int RegisterEventCallback(EventCallback callback, int type) {
+int registerEventCallback(EventCallback callback, int type) {
 	if (callback == NULL) {
 		return -1;
 	}
@@ -47,8 +47,8 @@ int RegisterEventCallback(EventCallback callback, int type) {
  * \param clbk
  * \return
  */
-static EventHandlerStatus event_check_handler(
-	XEvent *event, Display *disp, Window wnd, int type, EventCallback clbk) {
+static EventHandlerStatus pollEvent (XEvent *event,
+	Display *disp, Window wnd, int type, EventCallback clbk) {
 	if (type < 2 || type > 36) {
 		return EHS_OK;
 	}
@@ -68,10 +68,11 @@ static EventHandlerStatus event_check_handler(
  * \param wnd
  * \return
  */
-static EventHandlerStatus event_loop(XEvent *event, Display *disp, Window wnd) {
+static EventHandlerStatus pollEventLoop (XEvent *event,
+	Display *disp, Window wnd) {
 	EventHandlerStatus ret = EHS_OK;
 	for (int i = 2; i < 37; i++) {
-		if ((ret = event_check_handler(event, disp, wnd,
+		if ((ret = pollEvent(event, disp, wnd,
 			i, e_callback[i])) != EHS_OK) {
 			break;
 		}
@@ -84,7 +85,7 @@ static EventHandlerStatus event_loop(XEvent *event, Display *disp, Window wnd) {
  * \param disp
  * \return
  */
-EventHandlerStatus EventHandlerLoop(Display *disp, Window wnd) {
+EventHandlerStatus eventHandlerLoop(Display *disp, Window wnd) {
 	EventHandlerStatus ret = EHS_OK;
 	if (disp == NULL) {
 		return EHS_FAILED;
@@ -95,7 +96,7 @@ EventHandlerStatus EventHandlerLoop(Display *disp, Window wnd) {
 			(*loop_callback)(&event);
 		}
 
-		if ((ret = event_loop(&event, disp, wnd)) != EHS_OK) {
+		if ((ret = pollEventLoop(&event, disp, wnd)) != EHS_OK) {
 			break;
 		}
 	}
